@@ -89,6 +89,28 @@ class ShowCaseWidgetState extends State<ShowCaseWidget> {
     });
   }
 
+  void goToNextShowCase() {
+    setState(() {
+      if (activeWidgetId + 1 >= ids.length)
+        dismiss();
+      else
+        activeWidgetId = activeWidgetId + 1;
+    });
+  }
+
+  void goToPrevShowCase() {
+    setState(() {
+      if (activeWidgetId - 1 <= 0)
+        dismiss();
+      else
+        activeWidgetId = activeWidgetId - 1;
+    });
+  }
+
+  void stopShowCase() {
+    dismiss();
+  }
+
   void completed(GlobalKey id) {
     if (ids != null && ids[activeWidgetId] == id) {
       setState(() {

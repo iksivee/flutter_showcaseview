@@ -6,6 +6,7 @@ import 'package:showcaseview/custom_paint.dart';
 import 'get_position.dart';
 import 'layout_overlays.dart';
 import 'tooltip_widget.dart';
+import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
 class Showcase extends StatefulWidget {
   final Widget child;
@@ -54,11 +55,11 @@ class Showcase extends StatefulWidget {
         container = null,
         assert(overlayOpacity >= 0.0 && overlayOpacity <= 1.0,
             "overlay opacity should be >= 0.0 and <= 1.0."),
-        assert(
+        /*assert(
             onTargetClick == null
                 ? true
                 : (disposeOnTap == null ? false : true),
-            "disposeOnTap is required if you're using onTargetClick"),
+            "disposeOnTap is required if you're using onTargetClick"),*/
         assert(
             disposeOnTap == null
                 ? true
@@ -118,6 +119,8 @@ class Showcase extends StatefulWidget {
   @override
   _ShowcaseState createState() => _ShowcaseState();
 }
+
+//String _pageOfPages = '0/0';
 
 class _ShowcaseState extends State<Showcase> with TickerProviderStateMixin {
   bool _showShowCase = false;
@@ -184,11 +187,14 @@ class _ShowcaseState extends State<Showcase> with TickerProviderStateMixin {
         });
       }
     }
+
+    //_getPages(0);
   }
 
   @override
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
+
     return AnchoredOverlay(
       overlayBuilder: (BuildContext context, Rect rectBound, Offset offset) =>
           buildOverlayOnTarget(offset, rectBound.size, rectBound, size),
@@ -197,7 +203,19 @@ class _ShowcaseState extends State<Showcase> with TickerProviderStateMixin {
     );
   }
 
-  void _nextIfAny() {
+  /*_getPages(int val) {
+    int page = ShowCaseWidget.of(context).activeWidgetId ?? 0;
+    page = page + 1;
+    int totalPages = 4; //ShowCaseWidget.of(context).ids?.length? ?? 0;
+
+    setState(() {
+      String _pageOfPages = '$page/$totalPages';
+    });
+  }*/
+
+  _nextIfAny() {
+    if (widget.onTargetClick == null ? false : true) return;
+
     if (timer != null && timer.isActive) {
       if (ShowCaseWidget.of(context).autoPlayLockEnable) {
         return;
@@ -212,20 +230,19 @@ class _ShowcaseState extends State<Showcase> with TickerProviderStateMixin {
     }
   }
 
-  void _getOnTargetTap() {
+  _getOnTooltipTap() {
     if (widget.disposeOnTap == true) {
-      ShowCaseWidget.of(context).dismiss();
-      widget.onTargetClick();
+      return widget.onToolTipClick == null
+          ? () {
+              ShowCaseWidget.of(context).dismiss();
+            }
+          : () {
+              ShowCaseWidget.of(context).dismiss();
+              widget.onToolTipClick();
+            };
     } else {
-      (widget.onTargetClick ?? _nextIfAny)?.call();
+      return widget.onToolTipClick ?? () {};
     }
-  }
-
-  void _getOnTooltipTap() {
-    if (widget.disposeOnTap == true) {
-      ShowCaseWidget.of(context).dismiss();
-    }
-    widget.onToolTipClick?.call();
   }
 
   buildOverlayOnTarget(
@@ -257,7 +274,12 @@ class _ShowcaseState extends State<Showcase> with TickerProviderStateMixin {
             _TargetWidget(
               offset: offset,
               size: size,
-              onTap: _getOnTargetTap,
+              onTap: () {
+                if (widget.onTargetClick != null) {
+                  widget.onTargetClick();
+                } else
+                  _nextIfAny();
+              },
               shapeBorder: widget.shapeBorder,
             ),
             ToolTipWidget(
@@ -275,9 +297,51 @@ class _ShowcaseState extends State<Showcase> with TickerProviderStateMixin {
               showArrow: widget.showArrow,
               contentHeight: widget.height,
               contentWidth: widget.width,
-              onTooltipTap: _getOnTooltipTap,
+              onTooltipTap: _getOnTooltipTap(),
               contentPadding: widget.contentPadding,
             ),
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: new ButtonBar(
+                alignment: MainAxisAlignment.start,
+                children: <Widget>[
+                  RaisedButton(
+                      color: Colors.black,
+                      onPressed: () {
+                        ShowCaseWidget.of(context).goToPrevShowCase();
+                      },
+                      child: Icon(MdiIcons.arrowLeft) //Text('<') //,
+                      ),
+                  /*Text(
+                    (_pageOfPages = ShowCaseWidget.of(context)
+                            .activeWidgetId
+                            ?.toString() ??
+                        '') +
+                    '/' + (ShowCaseWidget.of(context).ids?.length.toString() ??
+                        ''),
+                    style: TextStyle(fontSize: 12, color: Colors.black),
+                  ),*/ //ShowCaseWidget.of(context).ids?.length.toString()
+                  RaisedButton(
+                      color: Colors.black,
+                      onPressed: () {
+                        ShowCaseWidget.of(context).goToNextShowCase();
+                      },
+                      child: //_pageOfPages,
+                          Icon(MdiIcons.arrowRight)
+                      //style: TextStyle(color: Colors.white),
+                      //) // ,
+                      ),
+                  RaisedButton(
+                      color: Colors.black,
+                      onPressed: () {
+                        print('stop showcase');
+                        ShowCaseWidget.of(context).stopShowCase();
+                      },
+                      child: Icon(MdiIcons.close) //Text('x') //,
+                      ),
+                ],
+              ),
+            )
           ],
         ),
       );
